@@ -9,6 +9,13 @@
 #include "RF24.h"
 #include "MEGA32A_UART_LIBRARY.h"
 
+#define PRINT_FUNCTIONS
+
+#ifdef PRINT_FUNCTIONS
+#include <stdio.h>
+#define PRIPSTR "%S"
+#endif
+
 /*
 Compatibility with AVR Functions
 */
@@ -215,7 +222,7 @@ void RF24::print_status(uint8_t status)
            (status & _BV(RX_DR))?1:0,
            (status & _BV(TX_DS))?1:0,
            (status & _BV(MAX_RT))?1:0,
-           ((status >> RX_P_NO) & B111),
+           ((status >> RX_P_NO) & 0b111),
            (status & _BV(TX_FULL))?1:0
           );
 }
@@ -226,8 +233,8 @@ void RF24::print_observe_tx(uint8_t value)
 {
   printf_P(PSTR("OBSERVE_TX=%02x: POLS_CNT=%x ARC_CNT=%x\r\n"),
            value,
-           (value >> PLOS_CNT) & B1111,
-           (value >> ARC_CNT) & B1111
+           (value >> PLOS_CNT) & 0b1111,
+           (value >> ARC_CNT) & 0b1111
           );
 }
 
