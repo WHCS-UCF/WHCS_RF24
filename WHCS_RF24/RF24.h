@@ -644,7 +644,6 @@ public:
    * @param[out] rx_ready There is a message waiting to be read (RX_DS)
    */
   void whatHappened(bool& tx_ok,bool& tx_fail,bool& rx_ready);
-  void whatHappenedRd(bool& tx_ok,bool& tx_fail,bool& rx_ready);
 
   /**
    * Test whether there was a carrier on the line for the
@@ -676,6 +675,8 @@ public:
    * @return true if this is a legitimate radio 
    */
   bool isValid() { return ce_pin != 0xff && csn_pin != 0xff; } 
+  void disableTransmissionInterrupt();
+  void disableMaxRetransmitInterrupt();
 
   /**@}*/
 };
