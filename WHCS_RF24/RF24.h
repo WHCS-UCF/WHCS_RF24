@@ -644,6 +644,7 @@ public:
    * @param[out] rx_ready There is a message waiting to be read (RX_DS)
    */
   void whatHappened(bool& tx_ok,bool& tx_fail,bool& rx_ready);
+  void whatHappenedRd(bool& tx_ok,bool& tx_fail,bool& rx_ready);
 
   /**
    * Test whether there was a carrier on the line for the

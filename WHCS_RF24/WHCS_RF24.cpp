@@ -9,6 +9,8 @@
 #include "RF24.h"
 #include "MEGA32A_UART_LIBRARY.h"
 
+#include <util/atomic.h>
+
 #define PRINT_FUNCTIONS
 
 #ifdef PRINT_FUNCTIONS
@@ -72,12 +74,14 @@ uint8_t RF24::read_register(uint8_t reg, uint8_t* buf, uint8_t len)
 {
   uint8_t status;
 
-  csn(LOW);
-  status = WriteByteSPI( R_REGISTER | ( REGISTER_MASK & reg ) );
-  while ( len-- )
-    *buf++ = WriteByteSPI(0xff);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    csn(LOW);
+    status = WriteByteSPI( R_REGISTER | ( REGISTER_MASK & reg ) );
+    while ( len-- )
+      *buf++ = WriteByteSPI(0xff);
 
-  csn(HIGH);
+    csn(HIGH);
+  }
 
   return status;
 }
@@ -86,12 +90,14 @@ uint8_t RF24::read_register(uint8_t reg, uint8_t* buf, uint8_t len)
 
 uint8_t RF24::read_register(uint8_t reg)
 {
-  csn(LOW);
-  WriteByteSPI( R_REGISTER | ( REGISTER_MASK & reg ) );
-  uint8_t result = WriteByteSPI(0xff);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    csn(LOW);
+    WriteByteSPI( R_REGISTER | ( REGISTER_MASK & reg ) );
+    uint8_t result = WriteByteSPI(0xff);
 
-  csn(HIGH);
-  return result;
+    csn(HIGH);
+    return result;
+  }
 }
 
 /****************************************************************************/
@@ -100,12 +106,14 @@ uint8_t RF24::write_register(uint8_t reg, const uint8_t* buf, uint8_t len)
 {
   uint8_t status;
 
-  csn(LOW);
-  status = WriteByteSPI( W_REGISTER | ( REGISTER_MASK & reg ) );
-  while ( len-- )
-    WriteByteSPI(*buf++);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    csn(LOW);
+    status = WriteByteSPI( W_REGISTER | ( REGISTER_MASK & reg ) );
+    while ( len-- )
+      WriteByteSPI(*buf++);
 
-  csn(HIGH);
+    csn(HIGH);
+  }
 
   return status;
 }
@@ -118,10 +126,12 @@ uint8_t RF24::write_register(uint8_t reg, uint8_t value)
 
   IF_SERIAL_DEBUG(printf_P(PSTR("write_register(%02x,%02x)\r\n"),reg,value));
 
-  csn(LOW);
-  status = WriteByteSPI( W_REGISTER | ( REGISTER_MASK & reg ) );
-  WriteByteSPI(value);
-  csn(HIGH);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    csn(LOW);
+    status = WriteByteSPI( W_REGISTER | ( REGISTER_MASK & reg ) );
+    WriteByteSPI(value);
+    csn(HIGH);
+  }
 
   return status;
 }
@@ -139,13 +149,15 @@ uint8_t RF24::write_payload(const void* buf, uint8_t len)
   
   //printf("[Writing %u bytes %u blanks]",data_len,blank_len);
   
-  csn(LOW);
-  status = WriteByteSPI( W_TX_PAYLOAD );
-  while ( data_len-- )
-    WriteByteSPI(*current++);
-  while ( blank_len-- )
-    WriteByteSPI(0);
-  csn(HIGH);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    csn(LOW);
+    status = WriteByteSPI( W_TX_PAYLOAD );
+    while ( data_len-- )
+      WriteByteSPI(*current++);
+    while ( blank_len-- )
+      WriteByteSPI(0);
+    csn(HIGH);
+  }
 
   return status;
 }
@@ -162,13 +174,15 @@ uint8_t RF24::read_payload(void* buf, uint8_t len)
   
   //printf("[Reading %u bytes %u blanks]",data_len,blank_len);
   
-  csn(LOW);
-  status = WriteByteSPI( R_RX_PAYLOAD );
-  while ( data_len-- )
-    *current++ = WriteByteSPI(0xff);
-  while ( blank_len-- )
-    WriteByteSPI(0xff);
-  csn(HIGH);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    csn(LOW);
+    status = WriteByteSPI( R_RX_PAYLOAD );
+    while ( data_len-- )
+      *current++ = WriteByteSPI(0xff);
+    while ( blank_len-- )
+      WriteByteSPI(0xff);
+    csn(HIGH);
+  }
 
   return status;
 }
@@ -179,9 +193,11 @@ uint8_t RF24::flush_rx(void)
 {
   uint8_t status;
 
-  csn(LOW);
-  status = WriteByteSPI( FLUSH_RX );
-  csn(HIGH);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    csn(LOW);
+    status = WriteByteSPI( FLUSH_RX );
+    csn(HIGH);
+  }
 
   return status;
 }
@@ -192,9 +208,11 @@ uint8_t RF24::flush_tx(void)
 {
   uint8_t status;
 
-  csn(LOW);
-  status = WriteByteSPI( FLUSH_TX );
-  csn(HIGH);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    csn(LOW);
+    status = WriteByteSPI( FLUSH_TX );
+    csn(HIGH);
+  }
 
   return status;
 }
@@ -205,9 +223,11 @@ uint8_t RF24::get_status(void)
 {
   uint8_t status;
 
-  csn(LOW);
-  status = WriteByteSPI( NOP );
-  csn(HIGH);
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    csn(LOW);
+    status = WriteByteSPI( NOP );
+    csn(HIGH);
+  }
 
   return status;
 }
@@ -515,7 +535,7 @@ bool RF24::write( const void* buf, uint8_t len )
   bool tx_ok, tx_fail;
   whatHappened(tx_ok,tx_fail,ack_payload_available);
   
-  //printf("%u%u%u\r\n",tx_ok,tx_fail,ack_payload_available);
+  printf("%u%u%u\r\n",tx_ok,tx_fail,ack_payload_available);
 
   result = tx_ok;
   IF_SERIAL_DEBUG(Serial.print(result?"...OK.":"...Failed"));
@@ -628,6 +648,21 @@ void RF24::whatHappened(bool& tx_ok,bool& tx_fail,bool& rx_ready)
   // Read the status & reset the status in one easy call
   // Or is that such a good idea?
   uint8_t status = write_register(STATUS,_BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT) );
+
+  // Report to the user what happened
+  tx_ok = status & _BV(TX_DS);
+  tx_fail = status & _BV(MAX_RT);
+  rx_ready = status & _BV(RX_DR);
+}
+
+/****************************************************************************/
+
+void RF24::whatHappenedRd(bool& tx_ok,bool& tx_fail,bool& rx_ready)
+{
+  // Read the status & reset the status in one easy call
+  // Or is that such a good idea?
+  // Grant: no, no it's not...
+  uint8_t status = read_register(STATUS);
 
   // Report to the user what happened
   tx_ok = status & _BV(TX_DS);
