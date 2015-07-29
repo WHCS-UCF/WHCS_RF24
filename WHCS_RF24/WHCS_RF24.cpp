@@ -415,8 +415,8 @@ void RF24::begin(void)
 	
 	// Disable dynamic payloads, to match dynamic_payloads_enabled setting
 	write_register(DYNPD,0);
-	disableTransmissionInterrupt();
-	disableMaxRetransmitInterrupt();
+	//disableTransmissionInterrupt();
+	//disableMaxRetransmitInterrupt();
 
 	// Reset current status
 	// Notice reset and flush is the last thing we do
